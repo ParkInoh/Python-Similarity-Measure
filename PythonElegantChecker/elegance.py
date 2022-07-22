@@ -1,4 +1,6 @@
 import os
+import re
+import constants
 from nltk.downloader import download as nltk_download
 from nltk.corpus import words as nltk_words
 from flake8.api import legacy as flake8
@@ -50,46 +52,96 @@ class Elegance:
         :param files:
         :returns: list[list[str]]
         """
+        assert len(files) > 0, 'length of files must be greater than 0'
         reports = []
         for file in files:
             report = self.__get_flake8_report(file)
             reports.append(report.get_statistics(''))
         return reports
 
+    def get_cyclomatic_metrics(self, codes: list[str]) -> list[list[int]]:
+        """
+        Returns the cyclomatic complexities of a list of codes.
 
-def get_cyclomatic_metrics(codes: list[str]) -> list[list[int]]:
-    """
-    Returns the cyclomatic complexities of a list of codes.
+        :param codes: strings of raw code
+        :returns: list[list[int]]
+        """
+        depths = []
+        for code in codes:
+            elements = complexity.cc_visit(code)
+            depths.append([element.complexity for element in elements])
+        return depths
 
-    :param codes: strings of raw code
-    :returns: list[list[int]]
-    """
-    depths = []
-    for code in codes:
-        elements = complexity.cc_visit(code)
-        depths.append([element.complexity for element in elements])
-    return depths
+    def get_raw_metrics(self, codes: list[str]) -> list[list[int]]:
+        """
+        Returns the raw metrics of a list of codes.
 
+        :param codes: strings of raw code
+        :returns: list[list[int]]
+        """
+        raw_metrics = []
+        for code in codes:
+            analyzed = raw.analyze(code)
+            raw_metrics.append([analyzed.loc, analyzed.sloc, analyzed.comments])
+        return raw_metrics
 
-def get_raw_metrics(codes: list[str]) -> list[list[int]]:
-    """
-    Returns the raw metrics of a list of codes.
+    def get_mi_metrics(self, codes: list[str]) -> list[float]:
+        """
+        Returns the MI metrics of a list of codes.
 
-    :param codes: strings of raw code
-    :returns: list[list[int]]
-    """
-    raw_metrics = []
-    for code in codes:
-        analyzed = raw.analyze(code)
-        raw_metrics.append([analyzed.loc, analyzed.sloc, analyzed.comments])
-    return raw_metrics
+        :param codes: strings of raw code
+        :returns: list[float]
+        """
+        return [metrics.mi_visit(code, True) for code in codes]
 
+    def check_name_dictionary_word(self, word: str) -> bool:
+        """
+        Checks if a word is correct variable name.
 
-def get_mi_metrics(codes: list[str]) -> list[float]:
-    """
-    Returns the MI metrics of a list of codes.
+        :param word: str: variable name to check
+        :returns: bool: True if the word is a correct variable name
+        """
+        assert len(word) > 0, 'length of word must be greater than 0'
+        if word in self.word_set:
+            if not any(regex.match(word) for regex in constants.REGEX_VAR_NAME_ERROR):
+                return False
+        else:
+            return True
 
-    :param codes: strings of raw code
-    :returns: list[float]
-    """
-    return [metrics.mi_visit(code, True) for code in codes]
+    def check_name_dictionary(self, words: list[str]) -> list[bool]:
+        """
+        Checks if a list of words are correct variable names.
+
+        :param words: list[str]: list of variable names to check
+        :returns: list[bool]: True if the word is a correct variable name
+        """
+        return [self.check_name_dictionary_word(word) for word in words]
+
+    def check_sequential_word(self, word: str) -> bool:
+        """
+        Checks if a word has triple consecutive characters.
+
+        :param word: str: variable name to check
+        :returns: bool: True if the word has triple consecutive characters
+        """
+        return True if re.search(r'(.)\1\1', word) else False
+
+    def check_sequential(self, words: list[str]) -> list[bool]:
+        """
+        Checks if a list of words have triple consecutive characters.
+
+        :param words: list[str]: list of variable names to check
+        :returns: list[bool]: True if the word has triple consecutive characters
+        """
+        return [self.check_sequential_word(word) for word in words]
+
+    def check_name_correctness(self, words: list[str]) -> list[bool]:
+        """
+        Checks if a list of words are correct variable names.
+
+        :param words: list[str]: list of variable names to check
+        :returns: list[bool]: True if the word is a correct variable name
+        """
+        dictionary_check = self.check_name_dictionary(words)
+        sequential_check = self.check_sequential(words)
+        return [dictionary or sequential for dictionary, sequential in zip(dictionary_check, sequential_check)]
