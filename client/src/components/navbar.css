@@ -1,0 +1,38 @@
+a{
+  text-decoration: none;
+  color: white;
+}
+.navbar{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: rgb(2, 45, 2);
+  padding: 8px 12px;
+}
+
+.navbar_logo{
+  font-size: 24px;
+  color: white;
+}
+
+.navbar_logo:hover, .link:hover {
+  color: aqua;
+}
+
+.navbar_logo i{
+  color: orange
+}
+
+.navbar_menu{
+  display: flex;
+  list-style: none;
+  padding-left: 0;
+}
+
+.navbar_menu li{
+  padding: 6px 12px;
+}
+
+.link:hover {
+  color: aqua;
+}

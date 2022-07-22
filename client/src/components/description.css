@@ -1,0 +1,15 @@
+.desBox{
+  box-sizing: border-box;
+  border-radius: 0px;
+  border: 1px solid rgb(220, 228, 2);
+  margin : 10px;
+  width: 99%;
+  height: 300px; 
+  color : rgb(255, 255, 255);
+  margin-left:auto;
+  margin-right:auto;
+  text-align : center;
+  overflow: auto;
+  background-color: rgb(39, 88, 88);
+  -ms-overflow-style: none;
+}
